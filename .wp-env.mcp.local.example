@@ -1,0 +1,3 @@
+WP_API_URL=http://127.0.0.1:8888/wp-json/mcp/mcp-adapter-default-server
+WP_API_USERNAME=wp-ai-agent
+WP_API_PASSWORD=replace-with-a-wordpress-application-password
