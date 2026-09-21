@@ -2,3 +2,4 @@ node_modules/
 .wp-env.mcp.local
 *.log
 .DS_Store
+experiments/native-admin/.https-demo

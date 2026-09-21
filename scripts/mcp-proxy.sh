@@ -10,7 +10,7 @@ if [ -f "$credentials_file" ]; then
 	set +a
 fi
 
-WP_API_URL=${WP_API_URL:-http://localhost:8888/wp-json/mcp/mcp-adapter-default-server}
+WP_API_URL=${WP_API_URL:-http://localhost:8888/wp-json/wp-ai-fragments/v1/mcp}
 WP_API_USERNAME=${WP_API_USERNAME:-wp-ai-agent}
 OAUTH_ENABLED=${OAUTH_ENABLED:-false}
 export WP_API_URL WP_API_USERNAME OAUTH_ENABLED

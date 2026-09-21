@@ -1,19 +1,25 @@
 {
   "name": "wp-ai-fragments",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Expose supported WordPress admin UI fragments to agents through Abilities and MCP Apps.",
   "scripts": {
     "postinstall": "patch-package",
-    "dev:start": "wp-env start --runtime=playground && ./scripts/provision-mcp-user.sh",
+    "dev:start": "wp-env start --runtime=playground && ./scripts/provision-mcp-user.sh && ./scripts/seed-test-site.sh",
     "dev:provision": "./scripts/provision-mcp-user.sh",
+    "dev:seed": "./scripts/seed-test-site.sh",
     "dev:stop": "wp-env stop",
     "dev:status": "wp-env status",
     "dev:destroy": "wp-env destroy",
+    "build": "vite build",
+    "test:rendering": "./scripts/test-rendering.sh",
     "mcp:start": "sh ./scripts/mcp-proxy.sh"
   },
   "devDependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.1.2",
     "@wordpress/env": "11.15.0",
-    "patch-package": "^8.0.0"
+    "patch-package": "^8.0.1",
+    "vite": "^8.3.0",
+    "vite-plugin-singlefile": "^2.3.3"
   }
 }

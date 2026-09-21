@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>WordPress UI fragment</title>
+		<script type="module" src="./fragment-viewer.js"></script>
+	</head>
+	<body>
+		<main class="viewer" aria-live="polite">
+			<header class="viewer-header">
+				<div>
+					<p class="eyebrow">WordPress UI fragment</p>
+					<h1 id="fragment-title">Loading fragment…</h1>
+					<p id="fragment-description">Preparing the WordPress field editor.</p>
+				</div>
+				<div class="actions">
+					<button id="fragment-expand" type="button" hidden>Expand</button>
+					<button id="fragment-open" class="button-secondary" type="button" hidden>Open in WordPress</button>
+				</div>
+			</header>
+			<form id="fragment-editor" class="editor" hidden>
+				<label id="fragment-field-label" for="fragment-value">Value</label>
+				<input id="fragment-value-single" type="text" hidden />
+				<textarea id="fragment-value" rows="14" hidden></textarea>
+				<div class="editor-actions">
+					<button id="fragment-save" type="submit">Save in WordPress</button>
+				</div>
+			</form>
+			<div id="fragment-fallback" class="fallback" hidden>
+				<p>This fragment needs its original WordPress screen.</p>
+			</div>
+			<div id="fragment-link-fallback" class="link-fallback" hidden>
+				<label for="fragment-url">Focused WordPress URL</label>
+				<input id="fragment-url" type="text" readonly />
+				<p>If this client blocks localhost navigation, copy this URL into your browser.</p>
+			</div>
+			<p id="fragment-status" class="status">Waiting for WordPress.</p>
+		</main>
+	</body>
+</html>
