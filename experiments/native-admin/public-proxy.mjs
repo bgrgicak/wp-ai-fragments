@@ -3,7 +3,7 @@ import http from 'node:http';
 const origin = 'https://bero.jurassic.tube';
 http.createServer((req,res)=>{
  const url=new URL(req.url,origin);
- const bootstrap=url.pathname==='/' && url.searchParams.has('aif-proof-bootstrap');
+ const bootstrap=['/','/wp-admin/admin-ajax.php'].includes(url.pathname) && url.searchParams.has('aif-proof-bootstrap');
  const session=/__Host-aif-proof=[a-f0-9]{64}(?:;|$)/.test(req.headers.cookie||'');
  const asset=/^\/(wp-includes|wp-content)\//.test(url.pathname)&&/\.(css|js|png|jpg|jpeg|gif|svg|woff2?|ttf|ico|webp|map)$/.test(url.pathname);
  if(req.headers.authorization || (!bootstrap && !asset && !session) || url.pathname==='/wp-login.php' || url.pathname==='/xmlrpc.php') {res.writeHead(403).end('This endpoint is available only through the MCP demo.');return;}
