@@ -1,28 +1,29 @@
-# Testing
+# Testing native WordPress admin
 
-## Native wp-admin / Jurassic Tube demo
-
-Follow [the native demo testing guide](experiments/native-admin/TESTING.md). It covers startup, the authenticated protocol suite, asset URL checks, browser harness, actual chat acceptance, reversible save validation and cleanup. The final user-confirmed rendering outcome and limitations are recorded in [LEARNINGS.md](experiments/native-admin/LEARNINGS.md).
+Keep the current WordPress site running; restarting Playground resets its database. Activate with `python3 experiments/native-admin/setup-local.py`, run `npm run build`, and keep the public proxy and Jurassic Tube tunnel running.
 
 ```sh
-python3 experiments/native-admin/test-protocol.py
+php -l wp-ai-fragments.php
+php -l experiments/native-admin/native-admin.php
+npm test
 ```
 
-This requires the running proof endpoint and Keychain credentials. It is an HTTP regression suite, not proof of interactive inline rendering.
+The suite checks runtime loading in all WordPress environments, local-only demo overrides, subdirectory bootstrap/session-check URLs, simultaneous browser handoffs, stalled-frame recovery, and native error-page visibility when admin footers are absent. Against the running site it checks both direct HTTP and STDIO tool/resource discovery, HTTP ping, accepted admin URLs, rejected external/traversal URLs, hidden session tools, private handoff, verifier/origin/replay rejection, native session restoration, scoped frame headers, and native settings forms. A second card with a different approved viewer must preserve the first card's cookie and REST nonce. Isolated checks cover account mismatch, expiry, and revoked-session replacement. It discovers an existing editable post/page for Gutenberg bootstrap checks rather than assuming a fixture ID. It creates, saves, reads, and deletes one temporary draft to verify native REST persistence. Existing content is not changed.
 
-## Main fragment viewer
+These checks prove protocol/server behavior, not visible chat rendering or browser cookie policy. For actual acceptance, reconnect `wp-native-admin` and open fresh `show_wp_admin` cards for:
 
-```sh
-npm run build
-npm run test:rendering
-```
+1. `/wp-admin/`: native dashboard with surrounding admin chrome hidden.
+2. `/wp-admin/edit.php`: native post list, search, and pagination.
+3. `/wp-admin/options-writing.php`: native settings form and Save Changes.
+4. An existing post/page edit URL: Gutenberg canvas, inserter, settings, and Save.
+5. Any installed plugin's admin URL: its complete native screen, without product-specific crops.
 
-The smoke test requires the main plugin endpoint `/wp-json/wp-ai-fragments/v1/mcp`, its seeded product 12 and application password. It verifies resource/tool wiring and submits the current content value through the main viewer's update tool. It is separate from the native iframe experiment. If the proof's plugin entrypoint is active instead, the main route may return 404; select the intended profile before running it.
+Use a disposable draft for a save test. Change a paragraph, save through the native editor, reopen, and independently verify the saved content. Record visible interaction separately from protocol checks.
 
-## Before reporting success
+The optional loopback MCP Apps harness is `node experiments/native-admin/serve.mjs`, then `http://127.0.0.1:8890/`. Pass an encoded admin path in `?path=...` to select another screen. It exercises the SDK/frame chain in a separate browser, which can have different cookie or network policies from Codex. `&noframes=1` and `&noforms=1` are negative controls for sandbox restrictions.
 
-- Check the actual record type/ID after every fresh Playground start; startup rebuilds the database.
-- Distinguish protocol, direct browser, browser harness and actual chat results.
-- Check scripts/styles and native tab interactions, not merely HTTP 200 or a completed handshake.
-- Verify a reversible persisted save before claiming end-to-end editing works.
-- Never include credentials, cookies, grants, private keys or authenticated page dumps in test evidence or commits.
+## Refactor verification (2026-09-30)
+
+The build, PHP/JavaScript syntax checks, viewer behavior suite, STDIO bridge suite, and live protocol suite pass. Dashboard, post list, media library, settings, Gutenberg initialization, HTTPS script/style origins, and temporary-draft REST persistence were verified. The in-app browser harness displayed the native Writing Settings form with Save Changes enabled. A subsequent Gutenberg harness navigation was blocked by the browser, so visible Gutenberg interaction and its Save button still require the chat acceptance check above.
+
+After the review fixes, the expanded suite and installable ZIP build pass. The live HTTP checks verify resource discovery, ping, and a second viewer reusing the first viewer's cookie and REST nonce. Native draft creation, save, independent read, and deletion all pass with that shared session. Deployment environments, subdirectory URLs, Web Locks serialization, stalled-frame recovery, and account/expiry/revocation boundaries are covered by isolated fixtures; visible chat acceptance was not rerun for these fixes.
