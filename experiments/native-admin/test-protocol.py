@@ -5,6 +5,7 @@ import html
 import urllib.parse
 import json
 import os
+from pathlib import Path
 import re
 import secrets
 import subprocess
@@ -12,7 +13,8 @@ import urllib.error
 import urllib.request
 
 site = os.environ.get('WP_ENV_SITE_URL', 'http://localhost:8888')
-origin = os.environ.get('AIF_PROOF_PUBLIC_ORIGIN', 'https://your-subdomain.jurassic.tube').rstrip('/')
+marker = Path(__file__).with_name('.https-demo')
+origin = (os.environ.get('AIF_PROOF_PUBLIC_ORIGIN') or (marker.read_text().strip() if marker.exists() else '') or site).rstrip('/')
 viewer = 'http://127.0.0.1:8891'
 bootstrap = '/wp-admin/admin-ajax.php?aif-proof-bootstrap=1&viewer=' + urllib.parse.quote(viewer, safe='')
 username = os.environ.get('WP_MCP_USERNAME', 'wp-ai-agent')
@@ -158,7 +160,7 @@ try:
     status, _, text = request('/wp-json/wp/v2/posts/' + str(draft_id) + '?context=edit', headers=rest_headers)
     check('saved draft content persists independently', status == 200 and json.loads(text)['content']['raw'] == content)
 finally:
-    deletion = urllib.request.Request(site + '/wp-json/wp/v2/posts/' + str(draft_id) + '?force=true', method='DELETE', headers={**rest_headers, 'X-Aif-Proof-Tls': '1'})
+    deletion = urllib.request.Request(site + '/wp-json/wp/v2/posts/' + str(draft_id) + '?force=true', method='DELETE', headers={**rest_headers, **({'X-Aif-Proof-Tls': '1'} if origin != site else {})})
     with urllib.request.urlopen(deletion, timeout=45) as response:
         check('disposable draft removed', response.status == 200 and json.load(response)['deleted'])
 

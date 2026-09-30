@@ -68,15 +68,6 @@ node experiments/native-admin/mcp-server.mjs
 
 The prior `scripts/mcp-proxy.sh` registration also runs this same bridge now. Configure one registration to avoid duplicate tools. Reconnect MCP after this refactor to discover `show_wp_admin` and the single resource `ui://wp-ai-fragments/wp-admin-v1.html`; open a fresh card because existing cards retain their old tool results.
 
-The bridge authenticates locally at `/wp-json/aif-proof/v1/mcp`. The native page is served through the existing restricted proxy:
-
-```sh
-touch experiments/native-admin/.https-demo
-node experiments/native-admin/public-proxy.mjs
-```
-
-Keep the existing Jurassic Tube SSH tunnel forwarding the approved public origin `https://your-subdomain.jurassic.tube` to loopback port **8893**. The bridge checks the public bootstrap endpoint before returning a card. Existing tunnel configuration is unchanged. Rebuild after changing `view.js` or `view.html`; WordPress serves `dist/view.html` on each resource read.
-
-Restart an already-running public proxy after updating its code so it allows the admin-directory bootstrap endpoint. Open fresh cards after this update to receive their WordPress-generated bootstrap URLs.
+The bridge authenticates locally at `/wp-json/aif-proof/v1/mcp`. Use a configured public HTTPS tunnel, such as Jurassic Tube, forwarding to the restricted proxy at `127.0.0.1:8893`. Write the assigned HTTPS origin to the ignored `experiments/native-admin/.https-demo` file. See [the development tunnel guide](docs/development-tunnel.md) for generic account, hostname, and SSH examples. The bridge checks public bootstrap availability; TLS overrides apply only to local WordPress environments.
 
 See [TESTING.md](TESTING.md) for protocol checks and browser acceptance. Stop the local environment with `npm run dev:stop` when its data is no longer needed.

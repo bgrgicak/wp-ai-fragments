@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import vm from 'node:vm';
+import './test-public-origin.mjs';
 
 const fixture = fileURLToPath(new URL('./test-runtime.php', import.meta.url));
 for (const environment of ['production', 'staging', 'development', 'local']) {

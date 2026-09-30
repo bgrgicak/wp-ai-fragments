@@ -1,6 +1,6 @@
 # Testing native WordPress admin
 
-Keep the current WordPress site running; restarting Playground resets its database. Activate with `python3 experiments/native-admin/setup-local.py`, run `npm run build`, and keep the public proxy and Jurassic Tube tunnel running.
+Keep the current WordPress site running; restarting Playground resets its database. Activate with `python3 experiments/native-admin/setup-local.py`, run `npm run build`, and keep the configured public proxy and HTTPS tunnel running. See [the development tunnel guide](docs/development-tunnel.md). Live tests read `AIF_PROOF_PUBLIC_ORIGIN` or the ignored `.https-demo` origin file; otherwise they use the local site URL.
 
 ```sh
 php -l wp-ai-fragments.php
