@@ -7,13 +7,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Test-fixture URL configuration for the optional local trusted-TLS proxy.
 // A deployed plugin would use the site's existing HTTPS configuration.
-$aif_proof_tls = 'local' === wp_get_environment_type() && ( ( 'wp-mcp-demo.test' === ( $_SERVER['HTTP_HOST'] ?? '' ) && 'https' === ( $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '' ) ) || '1' === ( $_SERVER['HTTP_X_AIF_PROOF_TLS'] ?? '' ) || ( file_exists( __DIR__ . '/.https-demo' ) && str_contains( $_SERVER['REQUEST_URI'] ?? '', '/aif-proof/v1/mcp' ) ) );
+$aif_proof_local = 'local' === wp_get_environment_type();
+$aif_proof_public_origin = '';
+if ( $aif_proof_local ) {
+	$aif_proof_public_origin = getenv( 'AIF_PROOF_PUBLIC_ORIGIN' ) ?: ( file_exists( __DIR__ . '/.https-demo' ) ? trim( file_get_contents( __DIR__ . '/.https-demo' ) ) : '' );
+	if ( '' !== $aif_proof_public_origin ) {
+		$parts = wp_parse_url( $aif_proof_public_origin );
+		if ( ! is_array( $parts ) || 'https' !== ( $parts['scheme'] ?? '' ) || empty( $parts['host'] ) || isset( $parts['user'] ) || isset( $parts['pass'] ) || isset( $parts['query'] ) || isset( $parts['fragment'] ) || ! in_array( $parts['path'] ?? '', array( '', '/' ), true ) ) {
+			throw new InvalidArgumentException( 'AIF_PROOF_PUBLIC_ORIGIN must be an HTTPS origin without credentials, a path, query, or fragment.' );
+		}
+		$aif_proof_public_origin = aif_proof_origin( $aif_proof_public_origin );
+	}
+}
+$aif_proof_tls = $aif_proof_local && ( ( 'wp-mcp-demo.test' === ( $_SERVER['HTTP_HOST'] ?? '' ) && 'https' === ( $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '' ) ) || '1' === ( $_SERVER['HTTP_X_AIF_PROOF_TLS'] ?? '' ) || ( '' !== $aif_proof_public_origin && str_contains( $_SERVER['REQUEST_URI'] ?? '', '/aif-proof/v1/mcp' ) ) );
 if ( $aif_proof_tls ) {
 	$_SERVER['HTTPS'] = 'on';
-	add_filter( 'pre_option_home', static fn() => 'https://your-subdomain.jurassic.tube' );
-	add_filter( 'pre_option_siteurl', static fn() => 'https://your-subdomain.jurassic.tube' );
+	$aif_proof_public_origin = $aif_proof_public_origin ?: 'https://aif-proof-wp.test:8892';
+	add_filter( 'pre_option_home', static fn() => $aif_proof_public_origin );
+	add_filter( 'pre_option_siteurl', static fn() => $aif_proof_public_origin );
 	foreach ( array( 'plugins_url', 'content_url', 'script_loader_src', 'style_loader_src' ) as $url_filter ) {
-		add_filter( $url_filter, static fn( $url ) => str_replace( array( 'http://localhost:8888', 'https://localhost:8888' ), 'https://your-subdomain.jurassic.tube', $url ), 1000 );
+		add_filter( $url_filter, static fn( $url ) => str_replace( array( 'http://localhost:8888', 'https://localhost:8888' ), $aif_proof_public_origin, $url ), 1000 );
 	}
 }
 define( 'AIF_PROOF_VIEW', $aif_proof_tls ? 'https://aif-proof-view.test:8891' : 'http://127.0.0.1:8891' );

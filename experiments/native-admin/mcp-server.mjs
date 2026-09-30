@@ -2,6 +2,7 @@
 import {execFileSync} from 'node:child_process';
 import {Server} from '@modelcontextprotocol/sdk/server/index.js';
 import {StdioServerTransport} from '@modelcontextprotocol/sdk/server/stdio.js';
+import {publicOrigin} from './public-origin.mjs';
 import {ListToolsRequestSchema, CallToolRequestSchema, ListResourcesRequestSchema, ReadResourceRequestSchema} from '@modelcontextprotocol/sdk/types.js';
 
 const site = process.env.WP_ENV_SITE_URL || 'http://localhost:8888';
@@ -9,6 +10,7 @@ if (!['localhost', '127.0.0.1'].includes(new URL(site).hostname)) throw Error('L
 const username = process.env.WP_MCP_USERNAME || 'wp-ai-agent';
 const uri = 'ui://wp-ai-fragments/wp-admin-v1.html';
 let id = 0;
+const tunnelOrigin = publicOrigin();
 
 async function rpc(method, params) {
   const password = process.env.WP_API_PASSWORD || execFileSync('security', ['find-generic-password', '-a', username, '-s', 'wp-ai-fragments-mcp', '-w'], {encoding:'utf8'}).trim();
@@ -25,12 +27,12 @@ async function rpc(method, params) {
 
 async function checkPublicTransport(result) {
   const origin = result.structuredContent?.origin;
-  if (origin !== 'https://your-subdomain.jurassic.tube') return;
+  if (!tunnelOrigin || origin !== tunnelOrigin) return;
   try {
     const response = await fetch(result.structuredContent.bootstrapUrl, {method:'HEAD', redirect:'error', signal:AbortSignal.timeout(10000)});
     if (response.status !== 200) throw Error(`HTTP ${response.status}`);
   } catch (error) {
-    throw Error(`Native admin public connection is unavailable (${error.message}). Start public-proxy.mjs and the Jurassic Tube SSH tunnel before opening the admin page.`);
+    throw Error(`Native admin public connection is unavailable (${error.message}). Start public-proxy.mjs and the configured HTTPS tunnel before opening the admin page.`);
   }
 }
 

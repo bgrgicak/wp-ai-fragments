@@ -3,6 +3,7 @@
 define( 'ABSPATH', __DIR__ . '/' );
 define( 'MINUTE_IN_SECONDS', 60 );
 $environment = $argv[1] ?? 'production';
+if ( false === getenv( 'AIF_PROOF_PUBLIC_ORIGIN' ) ) { putenv( 'AIF_PROOF_PUBLIC_ORIGIN=https://tunnel.example' ); }
 $_SERVER['HTTP_X_AIF_PROOF_TLS'] = '1';
 $_SERVER['REQUEST_METHOD'] = 'GET';
 $hooks = array();
@@ -44,6 +45,11 @@ function expect( bool $condition, string $message ): void {
 require dirname( __DIR__, 2 ) . '/wp-ai-fragments.php';
 expect( isset( $hooks['rest_api_init'] ), 'Runtime must load in every environment' );
 expect( isset( $filters['pre_option_home'] ) === ( 'local' === $environment ), 'Demo headers must only override local site URLs' );
+if ( 'local' === $environment ) {
+	expect( $filters['pre_option_home'][0]() === aif_proof_origin( getenv( 'AIF_PROOF_PUBLIC_ORIGIN' ) ), 'Use the configured public origin' );
+	expect( $filters['pre_option_siteurl'][0]() === $filters['pre_option_home'][0](), 'Home and site URLs must agree' );
+	expect( $filters['script_loader_src'][0]( 'http://localhost:8888/wp-includes/test.js' ) === $filters['pre_option_home'][0]() . '/wp-includes/test.js', 'Assets must follow the configured origin' );
+}
 
 if ( in_array( '--bootstrap', $argv, true ) ) {
 	$_GET = array( 'aif-proof-bootstrap' => '1', 'viewer' => 'http://127.0.0.1:8891' );
