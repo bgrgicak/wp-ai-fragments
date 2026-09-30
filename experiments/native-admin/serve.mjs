@@ -1,4 +1,5 @@
 // Loopback-only development host. Never deploy this credentialed test harness.
+import './build.mjs';
 import http from 'node:http';
 import https from 'node:https';
 import {homedir} from 'node:os';
@@ -9,9 +10,7 @@ import {build} from 'vite';
 import {viteSingleFile} from 'vite-plugin-singlefile';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-for (const entry of ['view.html', 'host.html']) {
-  await build({configFile:false, root, plugins:[viteSingleFile()], build:{outDir:'dist', emptyOutDir:false, rollupOptions:{input:root + entry}}});
-}
+await build({configFile:false, root, plugins:[viteSingleFile()], build:{outDir:'dist', emptyOutDir:false, rollupOptions:{input:root + 'host.html'}}});
 const tls = process.env.AIF_PROOF_HTTPS === '1';
 const backend = process.env.WP_ENV_SITE_URL || 'http://localhost:8888';
 const site = process.env.AIF_PROOF_PUBLIC_ORIGIN || (tls ? 'https://aif-proof-wp.test:8892' : backend);

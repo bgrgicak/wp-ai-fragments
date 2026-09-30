@@ -1,5 +1,7 @@
 node_modules/
+/dist/
 .wp-env.mcp.local
 *.log
 .DS_Store
 experiments/native-admin/.https-demo
+.gstack/

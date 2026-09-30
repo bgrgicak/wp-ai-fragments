@@ -8,7 +8,7 @@ async function rpc(method, params = {}) {
   return body.result;
 }
 const parameters = new URLSearchParams(location.search);
-const path = parameters.get('path') || '/wp-admin/post.php?post=12&action=edit';
+const path = parameters.get('path') || '/wp-admin/';
 const noforms = parameters.has('noforms');
 const noframes = parameters.has('noframes');
 const bridge = new AppBridge(null, {name:'Native admin proof host',version:'0.1'}, {serverTools:{}});
@@ -19,14 +19,13 @@ bridge.oncalltool = (params) => {
 const sandbox = document.querySelector('#sandbox');
 if (noforms) sandbox.setAttribute('sandbox', 'allow-scripts allow-same-origin');
 const initialized = await rpc('initialize', {protocolVersion:'2025-11-25',capabilities:{extensions:{'io.modelcontextprotocol/ui':{}}},clientInfo:{name:'proof',version:'0.1'}});
-const tool = (await rpc('tools/list')).tools.find((tool) => tool.name === 'show-admin');
+const tool = (await rpc('tools/list')).tools.find((tool) => tool.name === 'show_wp_admin');
 const resource = (await rpc('resources/read', {uri:tool._meta.ui.resourceUri})).contents[0];
 bridge.onsandboxready = () => bridge.sendSandboxResourceReady({html:resource.text,sandbox:`allow-scripts allow-same-origin${noforms ? '' : ' allow-forms'}`,csp:resource._meta.ui.csp});
 bridge.oninitialized = async () => {
   document.querySelector('#host-status').textContent = `MCP Apps initialized — ${initialized.serverInfo.name}; original plugin UI below`;
-  await bridge.sendToolInput({arguments:{path}});
-  const result = await rpc('tools/call', {name:'show-admin', arguments:{path}});
-  result.structuredContent.resume = parameters.has('resume');
+  await bridge.sendToolInput({arguments:{url:path}});
+  const result = await rpc('tools/call', {name:'show_wp_admin', arguments:{url:path}});
   await bridge.sendToolResult(result);
 };
 await bridge.connect(new PostMessageTransport(sandbox.contentWindow, sandbox.contentWindow));

@@ -1,58 +1,82 @@
 # WP AI Fragments
 
-WordPress plugin experiment for discovering wp-admin UI fragments and displaying them as focused, interactive native screens inside MCP Apps through the WordPress Abilities API and official MCP Adapter.
+Displays native WordPress admin pages inline through MCP Apps. The plugin has one user-facing tool:
 
-## Working native wp-admin demo
+```json
+{
+  "name": "show_wp_admin",
+  "arguments": {"url": "/wp-admin/post.php?post=2&action=edit"}
+}
+```
 
-The confirmed chat demo is the separate [native-admin experiment](experiments/native-admin/README.md): actual WooCommerce **Product data** and **Update**, cropped with CSS and embedded through MCP Apps over Jurassic Tube. Start with its [testing/setup instructions](experiments/native-admin/TESTING.md) and [findings](experiments/native-admin/LEARNINGS.md). The historical tool name is `show_product_description`; the current product is 12.
+`url` accepts an admin path or a full URL on the site's configured origin, for example `https://your-subdomain.jurassic.tube/wp-admin/options-writing.php`. Dashboard, post lists, editors, settings, media, and plugin admin pages use their original WordPress UI. Query strings and URL fragments are preserved. External URLs and paths outside the site's admin directory are rejected. WordPress still checks permissions and nonces for each screen and save.
 
-The main fragment viewer described below is a different implementation. Its no-iframe behavior and smoke test do not describe or validate the native-admin demo.
+The display follows the former Gutenberg tool: the native page appears in an iframe, surrounding admin chrome is hidden, and native forms, blocks, settings, and save handlers remain available. Embedded posts and pages use Gutenberg even when Classic Editor is active; ordinary browser sessions retain the site's editor selection. Other post types follow the site's configuration.
 
-## Local development
+The component-only `open-session` tool supplies the existing browser handoff. It is hidden from the model-facing tool list by MCP Apps visibility metadata. A one-time ticket expires after 60 seconds; the partitioned browser session lasts 20 minutes. Cards in the same browser partition reuse a valid session for the same account, preserving native save nonces and the original expiry. A different account cannot replace a live shared session. On browsers with Web Locks, simultaneous handoffs are serialized. The component offers Reconnect after a session/transport failure or 20 seconds of stalled frame loading, while still accepting a late successful load.
 
-Prerequisites: Node.js 20.18 or newer and npm.
+The development demo uses the existing Jurassic Tube transport and Codex viewer profile. The PHP plugin loads in all WordPress environments; demo TLS overrides apply only when WordPress is configured as `local`. It does not provide production session renewal, revocation, or expired ticket cleanup. Browser handoff and session-check URLs use WordPress's admin directory, including subdirectory installations.
+
+## Build the plugin
+
+From the repository root:
 
 ```sh
 npm install
+npm run build
+```
+
+This bundles the plugin's current MCP Apps viewer into `experiments/native-admin/dist/view.html`, with JavaScript and CSS included in the HTML. It requires no running WordPress site, credentials, or development server. Include the generated file alongside `wp-ai-fragments.php` and `experiments/native-admin/native-admin.php` when uploading the plugin, preserving those paths. The hosting server does not need Node.js.
+
+The optional local harness builds its own `host.html` when `node experiments/native-admin/serve.mjs` starts.
+
+To build an installable ZIP, run `npm run package` (requires Python 3 locally). It rebuilds the viewer and writes `dist/wp-ai-fragments.zip` containing only the plugin's runtime files. Upload it through **Plugins → Add New Plugin → Upload Plugin**, then activate it. No additional WordPress plugins are required; WooCommerce is needed only to use WooCommerce admin screens. Connect an MCP Apps client using the supported Codex viewer profile to the authenticated `/wp-json/aif-proof/v1/mcp` endpoint using a WordPress Application Password. Direct HTTP connections support initialization, ping, tool discovery/calls, and resource discovery/reads. The bundled local STDIO bridge still rejects remote site URLs.
+
+## Local development
+
+Requires Node.js, npm, Python 3, and macOS Keychain for automatic MCP credentials. Playground runs without Docker.
+
+```sh
+npm install
+npm run dev:status
+```
+
+If WordPress is stopped:
+
+```sh
 npm run dev:start
 ```
 
-The Playground-backed WordPress site runs at <http://127.0.0.1:8888>. The default development administrator is `admin` / `password`.
+Starting Playground creates a fresh database. Do not restart a running site to refresh a card. Local admin is `http://localhost:8888/wp-admin/`, with username `admin` and password `password`. The environment installs this plugin and Classic Editor; additional WordPress plugins can be installed normally when needed.
 
-The environment pins WordPress 7.0.4, PHP 8.3, MCP Adapter 0.6.1, WooCommerce 11.1.0, Classic Editor 1.7.0, Yoast SEO 28.4, Advanced Custom Fields 6.8.10, and Contact Form 7 6.1.7. Only activate the integration plugins needed for the current test profile.
-
-Starting the environment also creates an idempotent WooCommerce product fixture and verifies Contact Form 7's example form. Re-run only the data seeding step with `npm run dev:seed`.
-
-The seed step probes representative admin screens and records meta boxes, Settings API fields, and classic post title/content regions for `ui/list-fragments`. See [projects/fragment-discovery.md](projects/fragment-discovery.md) for the discovery model and current plugin observations.
-
-## MCP connection
-
-The WordPress MCP server endpoint is:
-
-```text
-http://127.0.0.1:8888/wp-json/wp-ai-fragments/v1/mcp
-```
-
-`npm run dev:start` provisions a dedicated `wp-ai-agent` user and stores a fresh WordPress application password in macOS Keychain under service `wp-ai-fragments-mcp`. Playground starts from a clean database, so this provisioning intentionally runs after every start. As a portable fallback, copy `.wp-env.mcp.local.example` to `.wp-env.mcp.local` and fill in credentials manually; the local file is ignored by Git.
-
-Start the STDIO-to-HTTP bridge with:
+For an already-running site, activate the consolidated entrypoint and rebuild:
 
 ```sh
-npm run mcp:start
+python3 experiments/native-admin/setup-local.py
+npm run build
 ```
 
-Codex can register that bridge as a project-specific WordPress MCP server by launching `scripts/mcp-proxy.sh` as its STDIO command.
+Credentials are stored for `wp-ai-agent` under Keychain service `wp-ai-fragments-mcp`. Alternatively, copy `.wp-env.mcp.local.example` to the ignored `.wp-env.mcp.local` for `npm run mcp:start`, or pass `WP_ENV_SITE_URL`, `WP_MCP_USERNAME`, and `WP_API_PASSWORD` directly to the bridge.
 
-The project server exposes only `ui/list-fragments` and `ui/render-fragment` plus the shared interactive viewer resource. The general MCP Adapter server remains available separately for ability-level diagnostics.
+## MCP and public transport
 
-The read-only `ui/list-fragments` ability returns fragments discovered on real admin requests. Its optional `plugin` input filters by active plugin slug.
+The existing `wp-native-admin` registration can keep its command:
 
-`ui/render-fragment` returns an MCP Apps component for every discovered fragment. Supported post fields (currently title and content) are loaded into native component controls and saved through the app-only `ui/update-post-field` ability. Other fragment types keep the focused authenticated wp-admin URL as a fallback.
+```sh
+node experiments/native-admin/mcp-server.mjs
+```
 
-The MCP component never embeds wp-admin in a nested iframe. WordPress capability checks run on every read and save ability, while the focused URL remains available for controls that cannot yet be represented safely inside the component. WordPress's normal frame protection remains unchanged.
+The prior `scripts/mcp-proxy.sh` registration also runs this same bridge now. Configure one registration to avoid duplicate tools. Reconnect MCP after this refactor to discover `show_wp_admin` and the single resource `ui://wp-ai-fragments/wp-admin-v1.html`; open a fresh card because existing cards retain their old tool results.
 
-Run `npm run build` after changing the MCP Apps launcher. With the development site running, `npm run test:rendering` verifies the MCP tool-to-launcher link and native focused URL.
+The bridge authenticates locally at `/wp-json/aif-proof/v1/mcp`. The native page is served through the existing restricted proxy:
 
-## Testing
+```sh
+touch experiments/native-admin/.https-demo
+node experiments/native-admin/public-proxy.mjs
+```
 
-See [TESTING.md](TESTING.md) for the two test profiles and required inline verification.
+Keep the existing Jurassic Tube SSH tunnel forwarding the approved public origin `https://your-subdomain.jurassic.tube` to loopback port **8893**. The bridge checks the public bootstrap endpoint before returning a card. Existing tunnel configuration is unchanged. Rebuild after changing `view.js` or `view.html`; WordPress serves `dist/view.html` on each resource read.
+
+Restart an already-running public proxy after updating its code so it allows the admin-directory bootstrap endpoint. Open fresh cards after this update to receive their WordPress-generated bootstrap URLs.
+
+See [TESTING.md](TESTING.md) for protocol checks and browser acceptance. Stop the local environment with `npm run dev:stop` when its data is no longer needed.
