@@ -1,5 +1,7 @@
 # WP AI Fragments
 
+> **Development status:** This plugin is still in development and is not ready for production use.
+
 Displays native WordPress admin pages inline through MCP Apps. The plugin has one user-facing tool:
 
 ```json
@@ -16,6 +18,16 @@ The display follows the former Gutenberg tool: the native page appears in an ifr
 The component-only `open-session` tool supplies the existing browser handoff. It is hidden from the model-facing tool list by MCP Apps visibility metadata. A one-time ticket expires after 60 seconds; the partitioned browser session lasts 20 minutes. Cards in the same browser partition reuse a valid session for the same account, preserving native save nonces and the original expiry. A different account cannot replace a live shared session. On browsers with Web Locks, simultaneous handoffs are serialized. The component offers Reconnect after a session/transport failure or 20 seconds of stalled frame loading, while still accepting a late successful load.
 
 The development demo uses the existing Jurassic Tube transport and Codex viewer profile. The PHP plugin loads in all WordPress environments; demo TLS overrides apply only when WordPress is configured as `local`. It does not provide production session renewal, revocation, or expired ticket cleanup. Browser handoff and session-check URLs use WordPress's admin directory, including subdirectory installations.
+
+## Screenshots
+
+Open the native WordPress post editor directly in chat.
+
+![The WordPress editor showing the Hello World post inside a Codex chat](docs/images/edit-post-in-chat.png)
+
+Open plugin admin pages, such as Jetpack's podcast setup, in the same chat.
+
+![Jetpack's Podcast admin page inside a Codex chat](docs/images/jetpack-podcast-in-chat.png)
 
 ## Build the plugin
 
